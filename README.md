@@ -14,7 +14,8 @@ mysql表配置rabbitmq交换机，队列，路由，回调地址，消费者进�
 #### 启动、停止队列监听进程
 ```php
 启动：php service.php send_code start
-通知：php service.php send_code stop
+停止：php service.php send_code stop
+查看状态：php service.php send_code status
 ```
 
 #### 进程查看
