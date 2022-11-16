@@ -43,7 +43,7 @@ class ProcessManager
     /**
      * @var string
      */
-    private $table = 'yibai_async_config';
+    private $table = 't_async_config';
     /**
      * @var string
      */
