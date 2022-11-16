@@ -126,15 +126,13 @@ class ProcessManager
         if ($process['status'] == self::STATUS_ENABLE) {
             echo 'process has start' . PHP_EOL;
             $query->close();
-            return;
+            return false;
         }
         $query->close();
         //默认定时器在执行回调函数时会自动创建协程，可单独设置定时器关闭协程。
-        //swoole_async_set(['enable_coroutine' => false]);
         //第四个参数，是否在 callback function 中启用协程，开启后可以直接在子进程的函数中使用协程 API
         //蜕变为守护进程时，该进程的 PID 将发生变化，可以使用 getmypid() 来获取当前的 PID
         \Swoole\Process::daemon();
-        //先获取master pid，再重命名进程名
         $this->pid = getmypid();
         //当前进程重命名
         $this->renameProcessName($this->master);
