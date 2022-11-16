@@ -4,9 +4,9 @@
 mysql表配置rabbitmq交换机，队列，路由，回调地址，消费者进程数等信息，可作为独立异步消息服务
 
 
-#### Getting Started 部署 
+#### Quick Start 部署 
 ```text
-1，导入mysql表，配置表启动队列相关信息
+1，导入mysql表，增加队列进程配置记录
 2，配置config/database.php，config/rabbitmq.php连接信息
 3，启动：php service.php send_code start
 ```
