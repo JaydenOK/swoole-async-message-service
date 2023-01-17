@@ -8,14 +8,14 @@ mysql表配置rabbitmq交换机，队列，路由，回调地址，消费者进�
 ```text
 1，导入mysql表，增加队列进程配置记录
 2，配置config/database.php，config/rabbitmq.php连接信息
-3，启动：php service.php send_code start
+3，启动：php service.php start send_code
 ```
 
 #### 启动、停止队列监听进程
 ```php
-启动：php service.php send_code start
-停止：php service.php send_code stop
-查看状态：php service.php send_code status
+启动：php service.php start send_code
+停止：php service.php stop send_code
+查看状态：php service.php status send_code
 ```
 
 #### 进程查看
@@ -34,5 +34,8 @@ root     17299  0.0  0.0 112736   972 pts/1    S+   16:55   0:00 grep --color=au
 #### 日志查看
 ```shell script
 [root@ac_web async-message-service]# tail -10 logs/server-2022-11.log 
-[root@ac_web async-message-service]# tail -10 logs/callback-2022-11.log 
+[root@ac_web async-message-service]# tail -10 logs/callback-2022-11.log
+ 
+[root@ac_web async_message_service]# cat cache/async-master-send_code.pid
+
 ```

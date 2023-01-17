@@ -43,13 +43,14 @@ class ProcessManager
     /**
      * @var string
      */
-    private $table = 't_async_config';
+    private $table = 'yibai_async_config';
     /**
      * @var string
      */
     private $queue;
     private $timerId;
     private $id;
+    private $pidFile;
 
     /**
      * @param array $argv
@@ -58,9 +59,10 @@ class ProcessManager
     public function run($argv = [])
     {
         try {
-            $this->queue = $argv[1] ?? 'XooX';
+            $cmd = $argv[1] ?? 'status';
+            $this->queue = $argv[2] ?? 'XooX';
             $this->master = 'async-master-' . $this->queue;
-            $cmd = $argv[2] ?? 'status';
+            $this->pidFile = $this->master . '.pid';
             $this->checkQueue();
             $this->initRabbitMQConfig($this->checkMQConfigFile());
             switch ($cmd) {
@@ -121,14 +123,10 @@ class ProcessManager
      */
     private function start()
     {
-        $query = (new PdoClient())->getQuery();
-        $process = $query->from($this->table)->where('queue', $this->queue)->fetch();
-        if ($process['status'] == self::STATUS_ENABLE) {
+        if ($this->isPidFileExist()) {
             echo 'process has start' . PHP_EOL;
-            $query->close();
             return false;
         }
-        $query->close();
         //默认定时器在执行回调函数时会自动创建协程，可单独设置定时器关闭协程。
         //第四个参数，是否在 callback function 中启用协程，开启后可以直接在子进程的函数中使用协程 API
         //蜕变为守护进程时，该进程的 PID 将发生变化，可以使用 getmypid() 来获取当前的 PID
@@ -157,6 +155,7 @@ class ProcessManager
         $this->renamePid = getmypid();
         $this->writeLog('start pid:' . $this->pid . ', renamePid:' . $this->renamePid);
         $this->saveAsyncRecord();
+        $this->savePidFile();
         $this->registerSignal();
         $this->registerTimer();
         return true;
@@ -167,32 +166,30 @@ class ProcessManager
      */
     private function stop()
     {
-        $query = (new PdoClient())->getQuery();
-        $process = $query->from($this->table)->where('queue', $this->queue)->fetch();
-        if ($process['status'] == self::STATUS_DISABLE) {
-            echo 'process has stop' . PHP_EOL;
-            $query->close();
+        if (!$this->isPidFileExist()) {
+            echo 'process started' . PHP_EOL;
             return;
         }
+        $this->resumePidFromPidFile();
         //检测父进程并发送停止信号
         //$signo=0，可以检测进程是否存在，不会发送信号
-        if (\Swoole\Process::kill($process['pid'], 0)) {
-            if (empty($process['pid'])) {
+        if (\Swoole\Process::kill($this->pid, 0)) {
+            if (empty($this->pid)) {
                 return;
             }
             //主进程为定时器常驻监听，退出需处理清理定时器进程
-            $this->writeLog('send pid stop:' . $process['pid']);
+            $this->writeLog('send pid stop:' . $this->pid);
             //Swoole\Timer::clear 不能用于清除其他进程的定时器，只作用于当前进程
             //向进程发送信号
-            \Swoole\Process::kill($process['pid'], SIGTERM);
+            \Swoole\Process::kill($this->pid, SIGTERM);
         } else {
             //不存在，清理子进程
-            $this->childPid = explode(',', $process['child_pid']);
             foreach ($this->childPid as $childPid) {
                 $this->writeLog('pid not exist, stop child pid');
                 \Swoole\Process::kill($childPid, SIGTERM);
             }
         }
+        $query = (new PdoClient())->getQuery();
         $query->update($this->table)->where('queue', $this->queue)->set(['status' => self::STATUS_DISABLE])->execute();
         $query->close();
     }
@@ -204,7 +201,8 @@ class ProcessManager
     private function status()
     {
         $this->queueConfig = $this->checkQueue();
-        echo print_r($this->queueConfig, true) . PHP_EOL;
+        echo $this->isPidFileExist() ? 'process running' : 'process not running', PHP_EOL, PHP_EOL;
+        echo 'queue configure:', PHP_EOL, json_encode($this->queueConfig, JSON_UNESCAPED_UNICODE), PHP_EOL;
         return $this->queueConfig;
     }
 
@@ -299,6 +297,7 @@ class ProcessManager
         }
         if ($masterExit) {
             $this->writeLog('master exit');
+            $this->removePidFile();
             //直接终止退出父进程
             exit(0);
         }
@@ -446,6 +445,43 @@ class ProcessManager
         $logFile = MODULE_DIR . '/logs/callback-' . date('Y-m') . '.log';
         $logData = (is_array($logData) || is_object($logData)) ? json_encode($logData, JSON_UNESCAPED_UNICODE) : $logData;
         file_put_contents($logFile, date('[Y-m-d H:i:s]') . $logData . PHP_EOL, FILE_APPEND);
+    }
+
+    private function getPidFilePath()
+    {
+        return MODULE_DIR . '/cache/' . $this->pidFile;
+    }
+
+    private function isPidFileExist()
+    {
+        return file_exists($this->getPidFilePath());
+    }
+
+    //第一个父进程id, 后面为子进程id, 逗号","分隔
+    private function savePidFile()
+    {
+        $content = $this->pid . ',' . implode(',', $this->childPid);
+        file_put_contents($this->getPidFilePath(), $content);
+    }
+
+    private function removePidFile()
+    {
+        if (file_exists($this->getPidFilePath())) {
+            @unlink($this->getPidFilePath());
+        }
+    }
+
+    //从pid附件恢复进程id相关信息
+    private function resumePidFromPidFile()
+    {
+        $content = file_get_contents($this->getPidFilePath());
+        $pidArr = explode(',', $content);
+        if (count($pidArr) < 2) {
+            throw new Exception('pid resume fail:' . $content);
+        }
+        $this->pid = (int)array_shift($pidArr);
+        $this->childPid = $pidArr;
+        return true;
     }
 
 }

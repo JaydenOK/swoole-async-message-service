@@ -1,4 +1,4 @@
-CREATE TABLE `t_async_config` (
+CREATE TABLE `yibai_async_config` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL DEFAULT '' COMMENT '任务名称',
   `master` varchar(50) NOT NULL DEFAULT '' COMMENT '主进程名称',
@@ -24,5 +24,5 @@ CREATE TABLE `t_async_config` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='异步消息服务队列';
 
 
--- INSERT INTO `t_async_config` (`id`, `name`, `master`, `prefetch`, `host`, `port`, `login`, `password`, `vhost`, `exchange`, `queue`, `route_key`, `num`, `url`, `pid`, `child_pid`, `status`, `create_time`, `update_time`) VALUES('1', 'send_app_msg', 'async-master-send_app_msg', '5', '192.168.71.91', '5672', 'admin', 'admin123.', '/', 'async-message-exchange', 'send_app_msg', 'send_app_msg', '2', 'http://192.168.92.208:81/callback/ThirdCompanyReceiver/accountSyncThirdAccount', '13542', '13543,13544', '2', '2022-11-15 14:45:41', '2022-11-16 16:33:39');
--- INSERT INTO t_async_config` (`id`, `name`, `master`, `prefetch`, `host`, `port`, `login`, `password`, `vhost`, `exchange`, `queue`, `route_key`, `num`, `url`, `pid`, `child_pid`, `status`, `create_time`, `update_time`) VALUES ('2', 'send_code', 'async-master-send_code', '5', '192.168.71.91', '5672', 'admin', 'admin123.', '/', 'async-message-exchange', 'send_code', 'send_code', '3', 'http://192.168.92.208:10038/Order/insertOrder', '14860', '14861,14862,14863', '2', '2022-11-15 14:45:41', '2022-11-16 16:41:10');
+-- INSERT INTO `yibai_async_config` (`id`, `name`, `master`, `prefetch`, `host`, `port`, `login`, `password`, `vhost`, `exchange`, `queue`, `route_key`, `num`, `url`, `pid`, `child_pid`, `status`, `create_time`, `update_time`) VALUES('1', 'send_app_msg', 'async-master-send_app_msg', '5', '192.168.71.91', '5672', 'admin', 'admin123.', '/', 'async-message-exchange', 'send_app_msg', 'send_app_msg', '2', 'http://192.168.92.208:81/callback/ThirdCompanyReceiver/accountSyncThirdAccount', '13542', '13543,13544', '2', '2022-11-15 14:45:41', '2022-11-16 16:33:39');
+-- INSERT INTO `yibai_async_config` (`id`, `name`, `master`, `prefetch`, `host`, `port`, `login`, `password`, `vhost`, `exchange`, `queue`, `route_key`, `num`, `url`, `pid`, `child_pid`, `status`, `create_time`, `update_time`) VALUES ('2', 'send_code', 'async-master-send_code', '5', '192.168.71.91', '5672', 'admin', 'admin123.', '/', 'async-message-exchange', 'send_code', 'send_code', '3', 'http://192.168.92.208:10038/Order/insertOrder', '14860', '14861,14862,14863', '2', '2022-11-15 14:45:41', '2022-11-16 16:41:10');
